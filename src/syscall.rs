@@ -19,6 +19,7 @@ pub const UNLINK: usize = 87;
 pub const GETDENTS64: usize = 217;
 pub const CLOCK_GETTIME: usize = 228;
 pub const EXIT_GROUP: usize = 231;
+pub const KBD_READ: usize = 666;
 pub const SLEEP: usize = 909090; // zzz haha
 pub const DRAW_PIXEL: usize = 5555;
 pub const DRAW_BUFFER: usize = 7777;
@@ -48,6 +49,24 @@ pub unsafe fn syscall1(num: usize, arg0: isize) -> isize {
             "int 0x80",
             in("rax") num,
             in("rdi") arg0,
+            lateout("rax") ret,
+            clobber_abi("sysv64"),
+            options(nostack)
+        );
+    }
+
+    ret
+}
+
+#[inline(always)]
+pub unsafe fn syscall2(num: usize, arg0: isize, arg1: isize) -> isize {
+    let ret: isize;
+    unsafe {
+        core::arch::asm!(
+            "int 0x80",
+            in("rax") num,
+            in("rdi") arg0,
+            in("rsi") arg1,
             lateout("rax") ret,
             clobber_abi("sysv64"),
             options(nostack)
