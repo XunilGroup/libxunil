@@ -39,7 +39,7 @@ static TOUPPER_TABLE: [i32; 384] = {
 
 #[unsafe(no_mangle)]
 extern "C" fn write(fd: i32, buf: *const u8, count: usize) -> isize {
-    0 // unsafe { syscall3(WRITE, fd as isize, buf as isize, count as isize) }
+    unsafe { syscall3(WRITE, fd as isize, buf as isize, count as isize) }
 }
 
 #[unsafe(no_mangle)]
