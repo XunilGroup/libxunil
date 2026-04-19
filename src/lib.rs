@@ -37,6 +37,8 @@ static TOUPPER_TABLE: [i32; 384] = {
     table
 };
 
+static mut TOUPPER_TABLE_PTR: *const i32 = core::ptr::null();
+
 #[unsafe(no_mangle)]
 extern "C" fn write(fd: i32, buf: *const u8, count: usize) -> isize {
     unsafe { syscall3(WRITE, fd as isize, buf as isize, count as isize) }
@@ -624,8 +626,11 @@ unsafe extern "C" fn strrchr(s: *const u8, ch: u8) -> *const u8 {
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn toupper(char: i32) -> i32 {
-    (char as u8).to_ascii_uppercase() as i32
+unsafe extern "C" fn toupper(ch: i32) -> i32 {
+    if ch == -1 {
+        return -1;
+    }
+    (ch as u8).to_ascii_uppercase() as i32
 }
 
 #[unsafe(no_mangle)]
@@ -638,8 +643,13 @@ extern "C" fn system(cmd: *const u8) -> i32 {
     0
 }
 #[unsafe(no_mangle)]
-extern "C" fn __ctype_toupper_loc() -> *const u8 {
-    TOUPPER_TABLE.as_ptr() as *const u8
+extern "C" fn __ctype_toupper_loc() -> *const *const i32 {
+    unsafe {
+        if TOUPPER_TABLE_PTR.is_null() {
+            TOUPPER_TABLE_PTR = TOUPPER_TABLE.as_ptr();
+        }
+        core::ptr::addr_of!(TOUPPER_TABLE_PTR)
+    }
 }
 
 #[unsafe(no_mangle)]
