@@ -30,7 +30,7 @@ pub unsafe fn syscall0(num: usize) -> isize {
     let ret: isize;
     unsafe {
         core::arch::asm!(
-            "int 0x80",
+            "syscall",
             in("rax") num,
             lateout("rax") ret,
             clobber_abi("sysv64"),
@@ -46,7 +46,7 @@ pub unsafe fn syscall1(num: usize, arg0: isize) -> isize {
     let ret: isize;
     unsafe {
         core::arch::asm!(
-            "int 0x80",
+            "syscall",
             in("rax") num,
             in("rdi") arg0,
             lateout("rax") ret,
@@ -63,7 +63,7 @@ pub unsafe fn syscall2(num: usize, arg0: isize, arg1: isize) -> isize {
     let ret: isize;
     unsafe {
         core::arch::asm!(
-            "int 0x80",
+            "syscall",
             in("rax") num,
             in("rdi") arg0,
             in("rsi") arg1,
@@ -81,7 +81,7 @@ pub unsafe fn syscall3(num: usize, arg0: isize, arg1: isize, arg2: isize) -> isi
     let ret: isize;
     unsafe {
         core::arch::asm!(
-            "int 0x80",
+            "syscall",
             in("rax") num,
             in("rdi") arg0,
             in("rsi") arg1,
