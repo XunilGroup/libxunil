@@ -40,12 +40,12 @@ static TOUPPER_TABLE: [i32; 384] = {
 static mut TOUPPER_TABLE_PTR: *const i32 = core::ptr::null();
 
 #[unsafe(no_mangle)]
-extern "C" fn write(fd: i32, buf: *const u8, count: usize) -> isize {
+pub extern "C" fn write(fd: i32, buf: *const u8, count: usize) -> isize {
     unsafe { syscall3(WRITE, fd as isize, buf as isize, count as isize) }
 }
 
 #[unsafe(no_mangle)]
-extern "C" fn exit(code: i32) -> ! {
+pub extern "C" fn exit(code: i32) -> ! {
     unsafe { syscall3(EXIT, code as isize, 0, 0) };
     loop {
         unsafe { core::arch::asm!("nop") };
@@ -53,7 +53,7 @@ extern "C" fn exit(code: i32) -> ! {
 }
 
 #[unsafe(no_mangle)]
-extern "C" fn strlen(s: *const u8) -> usize {
+pub extern "C" fn strlen(s: *const u8) -> usize {
     let mut len = 0usize;
     while unsafe { *s.add(len) } != 0 {
         len += 1;
@@ -62,7 +62,7 @@ extern "C" fn strlen(s: *const u8) -> usize {
 }
 
 #[unsafe(no_mangle)]
-extern "C" fn puts(s: *const u8) -> i32 {
+pub extern "C" fn puts(s: *const u8) -> i32 {
     write(1, s, strlen(s));
     write(1, b"\n\0".as_ptr(), 1);
 
@@ -70,7 +70,7 @@ extern "C" fn puts(s: *const u8) -> i32 {
 }
 
 #[unsafe(no_mangle)]
-extern "C" fn putchar(c: i32) -> i32 {
+pub extern "C" fn putchar(c: i32) -> i32 {
     let b = c as u8;
     write(1, core::ptr::addr_of!(b), 1);
 
@@ -78,7 +78,7 @@ extern "C" fn putchar(c: i32) -> i32 {
 }
 
 #[unsafe(no_mangle)]
-extern "C" fn abs(n: i32) -> i32 {
+pub extern "C" fn abs(n: i32) -> i32 {
     n.abs()
 }
 
@@ -155,7 +155,7 @@ pub unsafe fn write_c_formatted(fmt: *const u8, args: &mut VaList, writer: &mut 
         unsafe {
             match spec {
                 b'd' | b'i' => {
-                    let v: i32 = args.arg();
+                    let v: i32 = args.next_arg();
                     if let Some(p) = precision {
                         let _ = write!(writer, "{:01$}", v, p);
                     } else {
@@ -163,7 +163,7 @@ pub unsafe fn write_c_formatted(fmt: *const u8, args: &mut VaList, writer: &mut 
                     }
                 }
                 b'u' => {
-                    let v: u32 = args.arg();
+                    let v: u32 = args.next_arg();
                     if let Some(p) = precision {
                         let _ = write!(writer, "{:01$}", v, p);
                     } else {
@@ -171,7 +171,7 @@ pub unsafe fn write_c_formatted(fmt: *const u8, args: &mut VaList, writer: &mut 
                     }
                 }
                 b'x' => {
-                    let v: u32 = args.arg();
+                    let v: u32 = args.next_arg();
                     if let Some(p) = precision {
                         let _ = write!(writer, "{:01$x}", v, p);
                     } else {
@@ -179,7 +179,7 @@ pub unsafe fn write_c_formatted(fmt: *const u8, args: &mut VaList, writer: &mut 
                     }
                 }
                 b'X' => {
-                    let v: u32 = args.arg();
+                    let v: u32 = args.next_arg();
                     if let Some(p) = precision {
                         let _ = write!(writer, "{:01$X}", v, p);
                     } else {
@@ -187,7 +187,7 @@ pub unsafe fn write_c_formatted(fmt: *const u8, args: &mut VaList, writer: &mut 
                     }
                 }
                 b'o' => {
-                    let v: u32 = args.arg();
+                    let v: u32 = args.next_arg();
                     if let Some(p) = precision {
                         let _ = write!(writer, "{:01$o}", v, p);
                     } else {
@@ -195,7 +195,7 @@ pub unsafe fn write_c_formatted(fmt: *const u8, args: &mut VaList, writer: &mut 
                     }
                 }
                 b'p' => {
-                    let v: *const u8 = args.arg();
+                    let v: *const u8 = args.next_arg();
                     if v.is_null() {
                         let _ = writer.write_str("(null)");
                     } else {
@@ -203,11 +203,11 @@ pub unsafe fn write_c_formatted(fmt: *const u8, args: &mut VaList, writer: &mut 
                     }
                 }
                 b'c' => {
-                    let v: i32 = args.arg();
+                    let v: i32 = args.next_arg();
                     let _ = writer.write_char((v as u8) as char);
                 }
                 b's' => {
-                    let ptr: *const u8 = args.arg();
+                    let ptr: *const u8 = args.next_arg();
                     if ptr.is_null() {
                         let _ = writer.write_str("(null)");
                     } else {
@@ -228,7 +228,7 @@ pub unsafe fn write_c_formatted(fmt: *const u8, args: &mut VaList, writer: &mut 
                     }
                 }
                 b'f' | b'F' | b'g' | b'G' => {
-                    let v: f64 = args.arg();
+                    let v: f64 = args.next_arg();
                     if let Some(p) = precision {
                         let _ = write!(writer, "{:.*}", p, v);
                     } else {
@@ -240,7 +240,7 @@ pub unsafe fn write_c_formatted(fmt: *const u8, args: &mut VaList, writer: &mut 
                     fi += 1;
                     match next_spec {
                         b'd' | b'i' => {
-                            let v: i64 = args.arg();
+                            let v: i64 = args.next_arg();
                             if let Some(p) = precision {
                                 let _ = write!(writer, "{:01$}", v, p);
                             } else {
@@ -248,7 +248,7 @@ pub unsafe fn write_c_formatted(fmt: *const u8, args: &mut VaList, writer: &mut 
                             }
                         }
                         b'u' => {
-                            let v: u64 = args.arg();
+                            let v: u64 = args.next_arg();
                             if let Some(p) = precision {
                                 let _ = write!(writer, "{:01$}", v, p);
                             } else {
@@ -345,7 +345,7 @@ pub extern "C" fn _start() -> ! {
     exit(code as i32);
 }
 #[unsafe(no_mangle)]
-extern "C" fn atoi(mut c: *const u8) -> i32 {
+pub extern "C" fn atoi(mut c: *const u8) -> i32 {
     let mut value: i32 = 0;
     let mut sign: i32 = 1;
     unsafe {
@@ -390,7 +390,7 @@ fn pow10_i32(exp: i32) -> f64 {
 }
 
 #[unsafe(no_mangle)]
-extern "C" fn atof(mut c: *const u8) -> f64 {
+pub extern "C" fn atof(mut c: *const u8) -> f64 {
     let mut sign: f64 = 1.0;
     unsafe {
         while (*c).is_ascii_whitespace() {
@@ -469,34 +469,34 @@ pub fn compare_str(str_1: *const u8, str_2: *const u8, ignore_case: bool, n: usi
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn strcasecmp(str_1: *const u8, str_2: *const u8) -> i32 {
+pub unsafe extern "C" fn strcasecmp(str_1: *const u8, str_2: *const u8) -> i32 {
     compare_str(str_1, str_2, true, usize::MAX)
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn strcmp(str_1: *const u8, str_2: *const u8) -> i32 {
+pub unsafe extern "C" fn strcmp(str_1: *const u8, str_2: *const u8) -> i32 {
     compare_str(str_1, str_2, false, usize::MAX)
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn strncasecmp(str_1: *const u8, str_2: *const u8, n: usize) -> i32 {
+pub unsafe extern "C" fn strncasecmp(str_1: *const u8, str_2: *const u8, n: usize) -> i32 {
     compare_str(str_1, str_2, true, n)
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn strncmp(str_1: *const u8, str_2: *const u8, n: usize) -> i32 {
+pub unsafe extern "C" fn strncmp(str_1: *const u8, str_2: *const u8, n: usize) -> i32 {
     compare_str(str_1, str_2, false, n)
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn draw_pixel(x: u32, y: u32, color: u32) -> i32 {
+pub unsafe extern "C" fn draw_pixel(x: u32, y: u32, color: u32) -> i32 {
     unsafe {
         return syscall3(DRAW_PIXEL, x as isize, y as isize, color as isize) as i32;
     }
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn draw_buffer(buffer: *const u32, width: u32, height: u32) -> i32 {
+pub unsafe extern "C" fn draw_buffer(buffer: *const u32, width: u32, height: u32) -> i32 {
     unsafe {
         return syscall3(
             DRAW_BUFFER,
@@ -508,7 +508,7 @@ unsafe extern "C" fn draw_buffer(buffer: *const u32, width: u32, height: u32) ->
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn framebuffer_swap() -> i32 {
+pub unsafe extern "C" fn framebuffer_swap() -> i32 {
     unsafe {
         return syscall0(FRAMEBUFFER_SWAP) as i32;
     }
@@ -536,7 +536,7 @@ pub unsafe extern "C" fn strncpy(dest: *mut u8, source: *const u8, n: usize) -> 
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn strdup(s: *const u8) -> *mut u8 {
+pub unsafe extern "C" fn strdup(s: *const u8) -> *mut u8 {
     let len = strlen(s);
     let memory = malloc((len + 1) as u64);
     if memory.is_null() {
@@ -547,7 +547,7 @@ unsafe extern "C" fn strdup(s: *const u8) -> *mut u8 {
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn strstr(haystack: *const u8, needle: *const u8) -> *const u8 {
+pub unsafe extern "C" fn strstr(haystack: *const u8, needle: *const u8) -> *const u8 {
     if haystack.is_null() || needle.is_null() {
         return null();
     }
@@ -582,7 +582,7 @@ unsafe extern "C" fn strstr(haystack: *const u8, needle: *const u8) -> *const u8
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn strchr(s: *const u8, ch: i32) -> *const u8 {
+pub unsafe extern "C" fn strchr(s: *const u8, ch: i32) -> *const u8 {
     if s.is_null() {
         return null();
     }
@@ -603,7 +603,7 @@ unsafe extern "C" fn strchr(s: *const u8, ch: i32) -> *const u8 {
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn strrchr(s: *const u8, ch: u8) -> *const u8 {
+pub unsafe extern "C" fn strrchr(s: *const u8, ch: u8) -> *const u8 {
     let mut n = 0;
     let mut last: *const u8 = null();
 
@@ -626,7 +626,7 @@ unsafe extern "C" fn strrchr(s: *const u8, ch: u8) -> *const u8 {
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn toupper(ch: i32) -> i32 {
+pub unsafe extern "C" fn toupper(ch: i32) -> i32 {
     if ch == -1 {
         return -1;
     }
@@ -634,16 +634,16 @@ unsafe extern "C" fn toupper(ch: i32) -> i32 {
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C" fn tolower(char: i32) -> i32 {
+pub unsafe extern "C" fn tolower(char: i32) -> i32 {
     (char as u8).to_ascii_lowercase() as i32
 }
 
 #[unsafe(no_mangle)]
-extern "C" fn system(cmd: *const u8) -> i32 {
+pub extern "C" fn system(cmd: *const u8) -> i32 {
     0
 }
 #[unsafe(no_mangle)]
-extern "C" fn __ctype_toupper_loc() -> *const *const i32 {
+pub extern "C" fn __ctype_toupper_loc() -> *const *const i32 {
     unsafe {
         if TOUPPER_TABLE_PTR.is_null() {
             TOUPPER_TABLE_PTR = TOUPPER_TABLE.as_ptr();

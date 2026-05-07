@@ -5,7 +5,7 @@ edition = "2024"
 
 [lib]
 name = "xunil"
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "rlib"]
 
 [profile.release]
 panic = "abort"
@@ -15,4 +15,7 @@ opt-level = "s"
 spin = "0.10.0"
 
 [profile.dev]
+panic = "abort"
+
+[profile.test]
 panic = "abort"
