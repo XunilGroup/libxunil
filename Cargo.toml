@@ -6,6 +6,8 @@ edition = "2024"
 [lib]
 name = "xunil"
 crate-type = ["staticlib", "rlib"]
+test = false
+bench = false
 
 [profile.release]
 panic = "abort"

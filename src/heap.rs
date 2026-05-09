@@ -1,6 +1,13 @@
-use spin::mutex::Mutex;
+use crate::mem::{free, malloc, sbrk};
+use crate::util::{Locked, align_up};
+use core::alloc::AllocError;
+use core::alloc::{GlobalAlloc, Layout};
 
-use crate::util::align_up;
+#[global_allocator]
+pub static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
+
+pub const HEAP_START: usize = 0x_4444_4444_0000;
+pub const HEAP_SIZE: usize = 128 * 1024 * 1024; // 128 MiB
 
 pub struct LinkedNode {
     pub size: usize,
@@ -35,6 +42,12 @@ impl LinkedListAllocator {
     pub const fn new() -> LinkedListAllocator {
         Self {
             head: LinkedNode::new(0),
+        }
+    }
+
+    pub unsafe fn init(&mut self, heap_start: usize, heap_size: usize) {
+        unsafe {
+            self.add_free_memory_region(heap_start, heap_size);
         }
     }
 
@@ -106,4 +119,22 @@ impl LinkedListAllocator {
     }
 }
 
-pub static ALLOCATOR: Mutex<LinkedListAllocator> = Mutex::new(LinkedListAllocator::new());
+unsafe impl GlobalAlloc for Locked<LinkedListAllocator> {
+    unsafe fn alloc(&self, _layout: Layout) -> *mut u8 {
+        malloc(_layout.size() as u64)
+    }
+
+    unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {
+        free(_ptr)
+    }
+}
+
+pub fn init_heap() -> Result<(), AllocError> {
+    let memory = sbrk(HEAP_SIZE as i64) as *const u8;
+
+    unsafe {
+        ALLOCATOR.lock().init(memory.addr(), HEAP_SIZE);
+    }
+
+    Ok(())
+}

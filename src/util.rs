@@ -1,3 +1,5 @@
+use spin::{MutexGuard, mutex::Mutex};
+
 #[inline]
 pub const fn align_down(addr: usize, align: usize) -> usize {
     assert!(align.is_power_of_two(), "`align` must be a power of two");
@@ -16,5 +18,22 @@ pub const fn align_up(addr: usize, align: usize) -> usize {
         } else {
             panic!("attempt to add with overflow")
         }
+    }
+}
+
+pub struct Locked<A> {
+    inner: Mutex<A>,
+}
+
+impl<A> Locked<A> {
+    pub const fn new(inner: A) -> Self {
+        Locked {
+            inner: Mutex::new(inner),
+        }
+    }
+
+    #[allow(mismatched_lifetime_syntaxes)]
+    pub fn lock(&self) -> MutexGuard<A> {
+        self.inner.lock()
     }
 }

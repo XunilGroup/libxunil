@@ -1,5 +1,10 @@
 #![no_std]
+#![feature(allocator_api)]
 #![feature(c_variadic)]
+
+extern crate alloc;
+
+use alloc::ffi::CString;
 use core::{
     ffi::VaList,
     fmt::{Error, Result, Write},
@@ -8,8 +13,9 @@ use core::{
 };
 
 use crate::{
+    heap::init_heap,
     mem::{malloc, memcpy},
-    syscall::{DRAW_BUFFER, DRAW_PIXEL, EXIT, FRAMEBUFFER_SWAP, WRITE, syscall0, syscall3},
+    syscall::{EXIT, FRAMEBUFFER_SWAP, WRITE, syscall0, syscall3},
 };
 
 pub mod file;
@@ -338,8 +344,17 @@ pub extern "C" fn __stack_chk_fail_local() -> ! {
     __stack_chk_fail()
 }
 
+pub fn print(value: &str) {
+    // Rust only
+    let _ = write(1, value.as_ptr(), value.len());
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
+    print("Initializing Heap...\n");
+    if init_heap().is_err() {
+        exit(-1);
+    };
     let code = unsafe { main(0, null()) };
 
     exit(code as i32);
@@ -486,25 +501,6 @@ pub unsafe extern "C" fn strncasecmp(str_1: *const u8, str_2: *const u8, n: usiz
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn strncmp(str_1: *const u8, str_2: *const u8, n: usize) -> i32 {
     compare_str(str_1, str_2, false, n)
-}
-
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn draw_pixel(x: u32, y: u32, color: u32) -> i32 {
-    unsafe {
-        return syscall3(DRAW_PIXEL, x as isize, y as isize, color as isize) as i32;
-    }
-}
-
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn draw_buffer(buffer: *const u32, width: u32, height: u32) -> i32 {
-    unsafe {
-        return syscall3(
-            DRAW_BUFFER,
-            buffer as isize,
-            width as isize,
-            height as isize,
-        ) as i32;
-    }
 }
 
 #[unsafe(no_mangle)]

@@ -5,7 +5,7 @@ pub const CLOSE: usize = 3;
 pub const STAT: usize = 4;
 pub const LSEEK: usize = 8;
 pub const MMAP: usize = 9;
-pub const MUNMAP: usize = 9;
+pub const MUNMAP: usize = 11;
 pub const BRK: usize = 12;
 pub const GETPID: usize = 39;
 pub const FORK: usize = 57;
@@ -21,8 +21,7 @@ pub const CLOCK_GETTIME: usize = 228;
 pub const EXIT_GROUP: usize = 231;
 pub const KBD_READ: usize = 666;
 pub const SLEEP: usize = 909090; // zzz haha
-pub const DRAW_PIXEL: usize = 5555;
-pub const DRAW_BUFFER: usize = 7777;
+pub const MAP_FRAMEBUFFER: usize = 5555;
 pub const FRAMEBUFFER_SWAP: usize = 6666;
 
 #[inline(always)]
@@ -86,6 +85,54 @@ pub unsafe fn syscall3(num: usize, arg0: isize, arg1: isize, arg2: isize) -> isi
             in("rdi") arg0,
             in("rsi") arg1,
             in("rdx") arg2,
+            lateout("rax") ret,
+            clobber_abi("sysv64"),
+            options(nostack)
+        );
+    }
+
+    ret
+}
+
+#[inline(always)]
+pub unsafe fn syscall4(num: usize, arg0: isize, arg1: isize, arg2: isize, arg3: isize) -> isize {
+    let ret: isize;
+    unsafe {
+        core::arch::asm!(
+            "syscall",
+            in("rax") num,
+            in("rdi") arg0,
+            in("rsi") arg1,
+            in("rdx") arg2,
+            in("r10") arg3,
+            lateout("rax") ret,
+            clobber_abi("sysv64"),
+            options(nostack)
+        );
+    }
+
+    ret
+}
+
+#[inline(always)]
+pub unsafe fn syscall5(
+    num: usize,
+    arg0: isize,
+    arg1: isize,
+    arg2: isize,
+    arg3: isize,
+    arg4: isize,
+) -> isize {
+    let ret: isize;
+    unsafe {
+        core::arch::asm!(
+            "syscall",
+            in("rax") num,
+            in("rdi") arg0,
+            in("rsi") arg1,
+            in("rdx") arg2,
+            in("r10") arg3,
+            in("r8") arg4,
             lateout("rax") ret,
             clobber_abi("sysv64"),
             options(nostack)
