@@ -4,7 +4,6 @@
 
 extern crate alloc;
 
-use alloc::ffi::CString;
 use core::{
     ffi::VaList,
     fmt::{Error, Result, Write},
@@ -13,12 +12,14 @@ use core::{
 };
 
 use crate::{
+    graphics::framebuffer::map_framebuffer,
     heap::init_heap,
     mem::{malloc, memcpy},
     syscall::{EXIT, FRAMEBUFFER_SWAP, WRITE, syscall0, syscall3},
 };
 
 pub mod file;
+pub mod graphics;
 pub mod heap;
 pub mod keyboard;
 pub mod mem;
@@ -351,10 +352,14 @@ pub fn print(value: &str) {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    print("Initializing Heap...\n");
+    print("Allocating Heap...\n");
     if init_heap().is_err() {
         exit(-1);
     };
+
+    print("Mapping Framebuffer...\n");
+    unsafe { map_framebuffer() };
+
     let code = unsafe { main(0, null()) };
 
     exit(code as i32);

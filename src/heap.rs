@@ -7,7 +7,7 @@ use core::alloc::{GlobalAlloc, Layout};
 pub static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
-pub const HEAP_SIZE: usize = 128 * 1024 * 1024; // 128 MiB
+pub const HEAP_SIZE: usize = 32 * 1024 * 1024; // 32 MiB
 
 pub struct LinkedNode {
     pub size: usize,

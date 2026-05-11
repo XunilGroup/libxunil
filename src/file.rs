@@ -30,11 +30,11 @@ static mut STDOUT_FILE: FILE = FILE::zeroed();
 static mut STDIN_FILE: FILE = FILE::zeroed();
 
 #[unsafe(no_mangle)]
-pub static mut stderr: *mut FILE = unsafe { &raw mut STDERR_FILE };
+pub static mut stderr: *mut FILE = &raw mut STDERR_FILE;
 #[unsafe(no_mangle)]
-pub static mut stdin: *mut FILE = unsafe { &raw mut STDIN_FILE };
+pub static mut stdin: *mut FILE = &raw mut STDIN_FILE;
 #[unsafe(no_mangle)]
-pub static mut stdout: *mut FILE = unsafe { &raw mut STDOUT_FILE };
+pub static mut stdout: *mut FILE = &raw mut STDOUT_FILE;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn fopen(path: *const i8, mode: *const i8) -> *mut FILE {
