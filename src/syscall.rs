@@ -1,3 +1,5 @@
+#![allow(unused_variables, unused_unsafe, unused_mut)]
+
 pub const READ: usize = 0;
 pub const WRITE: usize = 1;
 pub const OPEN: usize = 2;
@@ -26,8 +28,9 @@ pub const FRAMEBUFFER_SWAP: usize = 6666;
 
 #[inline(always)]
 pub unsafe fn syscall0(num: usize) -> isize {
-    let ret: isize;
+    let mut ret: isize = 0;
     unsafe {
+        #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
             in("rax") num,
@@ -42,8 +45,9 @@ pub unsafe fn syscall0(num: usize) -> isize {
 
 #[inline(always)]
 pub unsafe fn syscall1(num: usize, arg0: isize) -> isize {
-    let ret: isize;
+    let mut ret: isize = 0;
     unsafe {
+        #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
             in("rax") num,
@@ -59,8 +63,9 @@ pub unsafe fn syscall1(num: usize, arg0: isize) -> isize {
 
 #[inline(always)]
 pub unsafe fn syscall2(num: usize, arg0: isize, arg1: isize) -> isize {
-    let ret: isize;
+    let mut ret: isize = 0;
     unsafe {
+        #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
             in("rax") num,
@@ -77,8 +82,9 @@ pub unsafe fn syscall2(num: usize, arg0: isize, arg1: isize) -> isize {
 
 #[inline(always)]
 pub unsafe fn syscall3(num: usize, arg0: isize, arg1: isize, arg2: isize) -> isize {
-    let ret: isize;
+    let mut ret: isize = 0;
     unsafe {
+        #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
             in("rax") num,
@@ -96,8 +102,9 @@ pub unsafe fn syscall3(num: usize, arg0: isize, arg1: isize, arg2: isize) -> isi
 
 #[inline(always)]
 pub unsafe fn syscall4(num: usize, arg0: isize, arg1: isize, arg2: isize, arg3: isize) -> isize {
-    let ret: isize;
+    let mut ret: isize = 0;
     unsafe {
+        #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
             in("rax") num,
@@ -123,8 +130,9 @@ pub unsafe fn syscall5(
     arg3: isize,
     arg4: isize,
 ) -> isize {
-    let ret: isize;
+    let mut ret: isize = 0;
     unsafe {
+        #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
             in("rax") num,

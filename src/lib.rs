@@ -640,6 +640,7 @@ pub unsafe extern "C" fn tolower(char: i32) -> i32 {
 }
 
 #[unsafe(no_mangle)]
+#[allow(unused_variables)]
 pub extern "C" fn system(cmd: *const u8) -> i32 {
     0
 }
@@ -659,6 +660,7 @@ pub unsafe extern "C" fn __isoc23_sscanf() -> ! {
 }
 
 #[unsafe(no_mangle)]
+#[allow(unused_variables)]
 pub unsafe extern "C" fn sscanf(str: *mut u8, fmt: *const u8, args: ...) -> i32 {
     0
 }
@@ -669,6 +671,7 @@ pub unsafe extern "C" fn __errno_location() -> *mut core::ffi::c_int {
 }
 
 #[panic_handler]
+#[allow(unused_variables)]
 fn panic(error: &core::panic::PanicInfo) -> ! {
     exit(-1)
 }

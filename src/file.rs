@@ -64,6 +64,7 @@ pub extern "C" fn fclose(file_ptr: *mut FILE) -> i32 {
 }
 
 #[unsafe(no_mangle)]
+#[allow(unused_variables)]
 pub unsafe extern "C" fn fprintf(file_ptr: *mut FILE, fmt: *const u8, args: ...) -> i32 {
     if fmt.is_null() || file_ptr.is_null() || !fd_ok(unsafe { (*file_ptr).fd }) {
         return -1;
@@ -132,26 +133,31 @@ pub extern "C" fn ftell(stream: *mut FILE) -> i64 {
 }
 
 #[unsafe(no_mangle)]
+#[allow(unused_variables)]
 pub extern "C" fn fflush(file_ptr: *mut FILE) -> i32 {
     0
 }
 
 #[unsafe(no_mangle)]
+#[allow(unused_variables)]
 pub extern "C" fn mkdir(path: *const u8, mode: *const u8) -> i32 {
     0
 }
 
 #[unsafe(no_mangle)]
+#[allow(unused_variables)]
 pub extern "C" fn remove(path: *const i8) -> i32 {
     0
 }
 
 #[unsafe(no_mangle)]
+#[allow(unused_variables)]
 pub extern "C" fn rename(path: *const u8, new_path: *const u8) -> i32 {
     0
 }
 
 #[unsafe(no_mangle)]
+#[allow(unused_variables)]
 pub unsafe extern "C" fn vfprintf(stream: *const u8, format: *const u8, args: ...) -> i32 {
     0
 }
