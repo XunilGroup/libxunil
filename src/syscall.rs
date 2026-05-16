@@ -33,9 +33,15 @@ pub unsafe fn syscall0(num: usize) -> isize {
         #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
-            in("rax") num,
-            lateout("rax") ret,
+            inlateout("rax") num => ret,
             clobber_abi("sysv64"),
+            options(nostack)
+        );
+        #[cfg(target_arch = "aarch64")]
+        core::arch::asm!(
+            "svc #0",
+            in("x8") num,
+            lateout("x0") ret,
             options(nostack)
         );
     }
@@ -50,10 +56,16 @@ pub unsafe fn syscall1(num: usize, arg0: isize) -> isize {
         #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
-            in("rax") num,
+            inlateout("rax") num => ret,
             in("rdi") arg0,
-            lateout("rax") ret,
             clobber_abi("sysv64"),
+            options(nostack)
+        );
+        #[cfg(target_arch = "aarch64")]
+        core::arch::asm!(
+            "svc #0",
+            in("x8") num,
+            inlateout("x0") arg0 => ret,
             options(nostack)
         );
     }
@@ -68,11 +80,18 @@ pub unsafe fn syscall2(num: usize, arg0: isize, arg1: isize) -> isize {
         #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
-            in("rax") num,
+            inlateout("rax") num => ret,
             in("rdi") arg0,
             in("rsi") arg1,
-            lateout("rax") ret,
             clobber_abi("sysv64"),
+            options(nostack)
+        );
+        #[cfg(target_arch = "aarch64")]
+        core::arch::asm!(
+            "svc #0",
+            in("x8") num,
+            inlateout("x0") arg0 => ret,
+            in("x1") arg1,
             options(nostack)
         );
     }
@@ -87,12 +106,20 @@ pub unsafe fn syscall3(num: usize, arg0: isize, arg1: isize, arg2: isize) -> isi
         #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
-            in("rax") num,
+            inlateout("rax") num => ret,
             in("rdi") arg0,
             in("rsi") arg1,
             in("rdx") arg2,
-            lateout("rax") ret,
             clobber_abi("sysv64"),
+            options(nostack)
+        );
+        #[cfg(target_arch = "aarch64")]
+        core::arch::asm!(
+            "svc #0",
+            in("x8") num,
+            inlateout("x0") arg0 => ret,
+            in("x1") arg1,
+            in("x2") arg2,
             options(nostack)
         );
     }
@@ -107,13 +134,22 @@ pub unsafe fn syscall4(num: usize, arg0: isize, arg1: isize, arg2: isize, arg3: 
         #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
-            in("rax") num,
+            inlateout("rax") num => ret,
             in("rdi") arg0,
             in("rsi") arg1,
             in("rdx") arg2,
             in("r10") arg3,
-            lateout("rax") ret,
             clobber_abi("sysv64"),
+            options(nostack)
+        );
+        #[cfg(target_arch = "aarch64")]
+        core::arch::asm!(
+            "svc #0",
+            in("x8") num,
+            inlateout("x0") arg0 => ret,
+            in("x1") arg1,
+            in("x2") arg2,
+            in("x3") arg3,
             options(nostack)
         );
     }
@@ -135,14 +171,24 @@ pub unsafe fn syscall5(
         #[cfg(target_arch = "x86_64")]
         core::arch::asm!(
             "syscall",
-            in("rax") num,
+            inlateout("rax") num => ret,
             in("rdi") arg0,
             in("rsi") arg1,
             in("rdx") arg2,
             in("r10") arg3,
             in("r8") arg4,
-            lateout("rax") ret,
             clobber_abi("sysv64"),
+            options(nostack)
+        );
+        #[cfg(target_arch = "aarch64")]
+        core::arch::asm!(
+            "svc #0",
+            in("x8") num,
+            inlateout("x0") arg0 => ret,
+            in("x1") arg1,
+            in("x2") arg2,
+            in("x3") arg3,
+            in("x4") arg4,
             options(nostack)
         );
     }
