@@ -17,6 +17,7 @@ impl UserFrameBuffer {
         src_width: usize,
         src_height: usize,
     ) {
+        let _buf = unsafe { core::ptr::read_volatile(&self.buf_virt) };
         for dy in 0..self.height {
             let sy = dy * src_height / self.height;
 

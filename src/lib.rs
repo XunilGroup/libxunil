@@ -89,13 +89,13 @@ pub extern "C" fn abs(n: i32) -> i32 {
     n.abs()
 }
 
-struct BufWriter {
+struct FormatBufWriter {
     buf: *mut u8,
     max: usize,
     pos: usize,
 }
 
-impl Write for BufWriter {
+impl Write for FormatBufWriter {
     fn write_str(&mut self, s: &str) -> Result {
         for byte in s.bytes() {
             if self.pos >= self.max {
@@ -302,7 +302,7 @@ pub unsafe extern "C" fn vsnprintf(
     }
 
     let max = size - 1;
-    let mut writer = BufWriter { buf, max, pos: 0 };
+    let mut writer = FormatBufWriter { buf, max, pos: 0 };
 
     unsafe { write_c_formatted(fmt, &mut args, &mut writer) };
 
@@ -320,7 +320,7 @@ pub unsafe extern "C" fn snprintf(buf: *mut u8, size: usize, fmt: *const u8, mut
     }
 
     let max = size - 1;
-    let mut writer = BufWriter { buf, max, pos: 0 };
+    let mut writer = FormatBufWriter { buf, max, pos: 0 };
 
     unsafe { write_c_formatted(fmt, &mut args, &mut writer) };
 
@@ -670,8 +670,40 @@ pub unsafe extern "C" fn __errno_location() -> *mut core::ffi::c_int {
     addr_of_mut!(ERRNO)
 }
 
+struct ErrorBufWriter<'a> {
+    buf: &'a mut [u8],
+    pos: usize,
+}
+
+impl<'a> ErrorBufWriter<'a> {
+    fn new(buf: &'a mut [u8]) -> Self {
+        Self { buf, pos: 0 }
+    }
+}
+
+impl core::fmt::Write for ErrorBufWriter<'_> {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        let bytes = s.as_bytes();
+        let remaining = &mut self.buf[self.pos..];
+        let len = bytes.len().min(remaining.len());
+        remaining[..len].copy_from_slice(&bytes[..len]);
+        self.pos += len;
+        Ok(())
+    }
+}
+
 #[panic_handler]
 #[allow(unused_variables)]
-fn panic(error: &core::panic::PanicInfo) -> ! {
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+    print("\nUSER PANIC:\n");
+    let mut buf = [0u8; 512];
+    let msg = {
+        let mut w = ErrorBufWriter::new(&mut buf);
+        let _ = core::fmt::write(&mut w, core::format_args!("{}", _info));
+        let len = w.pos;
+        core::str::from_utf8(&buf[..len]).unwrap_or("(utf8 error)")
+    };
+    print(msg);
+    print("\n");
     exit(-1)
 }
