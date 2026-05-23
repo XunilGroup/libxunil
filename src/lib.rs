@@ -6,7 +6,7 @@ extern crate alloc;
 
 use core::{
     ffi::VaList,
-    fmt::{Error, Result, Write},
+    fmt::{self, Error, Result, Write},
     ptr::{addr_of_mut, null, null_mut},
     usize,
 };
@@ -28,6 +28,38 @@ pub mod time;
 pub mod util;
 
 static mut ERRNO: core::ffi::c_int = 0;
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => {
+        $crate::_print(core::format_args!($($arg)*))
+    };
+}
+
+#[macro_export]
+macro_rules! println {
+    () => {
+        $crate::_print(core::format_args!("\n"))
+    };
+    ($($arg:tt)*) => {
+        $crate::_print(core::format_args!("{}\n", core::format_args!($($arg)*)))
+    };
+}
+
+pub struct ConsoleWriter {}
+
+impl Write for ConsoleWriter {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        print(s);
+        Ok(())
+    }
+}
+
+#[doc(hidden)]
+pub fn _print(args: core::fmt::Arguments) {
+    let mut writer = ConsoleWriter {};
+    let _ = writer.write_fmt(args);
+}
 
 static TOUPPER_TABLE: [i32; 384] = {
     let mut table = [0i32; 384];
