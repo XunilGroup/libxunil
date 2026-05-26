@@ -1,45 +1,53 @@
-use crate::syscall::{MAP_FRAMEBUFFER, syscall0};
+use crate::{
+    io::window::Window,
+    shm::{SHM_SLOT_SIZE, USER_SHM_BASE},
+};
 
-pub const USER_FB_BASE: u64 = 0x0000_7F00_0000_0000;
-
-#[repr(C)]
-pub struct UserFrameBuffer {
-    pub buf_virt: *mut u32,
+pub struct WindowFrameBuffer {
+    pub ptr: *mut u32,
     pub width: usize,
     pub height: usize,
-    pub pitch: usize,
 }
 
-impl UserFrameBuffer {
-    pub unsafe fn load_from_ptr(
-        &mut self,
-        src_ptr: *const u32,
-        src_width: usize,
-        src_height: usize,
-    ) {
-        let _buf = unsafe { core::ptr::read_volatile(&self.buf_virt) };
-        for dy in 0..self.height {
-            let sy = dy * src_height / self.height;
-
-            for dx in 0..self.width {
-                let sx = dx * src_width / self.width;
-
-                let src_pixel = unsafe { *src_ptr.add(sy * src_width + sx) };
-
-                unsafe { *self.buf_virt.add(dy * self.pitch + dx) = src_pixel };
-            }
+impl WindowFrameBuffer {
+    pub fn from_window(window: &Window) -> Self {
+        let ptr = (USER_SHM_BASE + window.shm_id * SHM_SLOT_SIZE) as *mut u32;
+        WindowFrameBuffer {
+            ptr,
+            width: window.width,
+            height: window.height,
         }
     }
-}
 
-pub unsafe fn map_framebuffer() {
-    unsafe { syscall0(MAP_FRAMEBUFFER) };
-}
+    #[inline(always)]
+    pub fn put_pixel(&mut self, x: usize, y: usize, color: u32) {
+        if x >= self.width || y >= self.height {
+            return;
+        }
+        let idx = y * self.width + x;
+        if idx >= self.width * self.height {
+            return;
+        }
+        unsafe { self.ptr.add(idx).write(color) };
+    }
 
-#[unsafe(no_mangle)]
-unsafe extern "C" fn draw_buffer(buffer: *const u32, width: u32, height: u32) -> i32 {
-    let fb_ptr = USER_FB_BASE as *mut UserFrameBuffer;
-    unsafe { (*fb_ptr).load_from_ptr(buffer, width as usize, height as usize) };
+    #[inline(always)]
+    pub fn fill_span(&mut self, x: usize, y: usize, len: usize, color: u32) {
+        if y >= self.height || x >= self.width || len == 0 {
+            return;
+        }
+        let len = core::cmp::min(len, self.width - x);
+        let start = y * self.width + x;
+        unsafe {
+            let slice = core::slice::from_raw_parts_mut(self.ptr.add(start), len);
+            slice.fill(color);
+        }
+    }
 
-    0
+    pub fn clear(&mut self, color: u32) {
+        unsafe {
+            let slice = core::slice::from_raw_parts_mut(self.ptr, self.width * self.height);
+            slice.fill(color);
+        }
+    }
 }

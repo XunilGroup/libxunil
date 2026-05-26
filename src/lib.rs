@@ -12,19 +12,17 @@ use core::{
 };
 
 use crate::{
-    graphics::framebuffer::map_framebuffer,
     heap::init_heap,
     mem::{malloc, memcpy},
-    syscall::{EXIT, FRAMEBUFFER_SWAP, WRITE, syscall0, syscall3},
+    syscall::{EXIT, GETPID, WRITE, syscall0, syscall3},
 };
 
-pub mod file;
 pub mod graphics;
 pub mod heap;
-pub mod keyboard;
+pub mod io;
 pub mod mem;
+pub mod shm;
 pub mod syscall;
-pub mod time;
 pub mod util;
 
 static mut ERRNO: core::ffi::c_int = 0;
@@ -389,9 +387,6 @@ pub extern "C" fn _start() -> ! {
         exit(-1);
     };
 
-    print("Mapping Framebuffer...\n");
-    unsafe { map_framebuffer() };
-
     let code = unsafe { main(0, null()) };
 
     exit(code as i32);
@@ -541,13 +536,6 @@ pub unsafe extern "C" fn strncmp(str_1: *const u8, str_2: *const u8, n: usize) -
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn framebuffer_swap() -> i32 {
-    unsafe {
-        return syscall0(FRAMEBUFFER_SWAP) as i32;
-    }
-}
-
-#[unsafe(no_mangle)]
 pub unsafe extern "C" fn strncpy(dest: *mut u8, source: *const u8, n: usize) -> *mut u8 {
     let mut i = 0usize;
     while i < n {
@@ -676,6 +664,12 @@ pub unsafe extern "C" fn tolower(char: i32) -> i32 {
 pub extern "C" fn system(cmd: *const u8) -> i32 {
     0
 }
+
+#[unsafe(no_mangle)]
+pub extern "C" fn getpid() -> isize {
+    unsafe { syscall0(GETPID) }
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn __ctype_toupper_loc() -> *const *const i32 {
     unsafe {

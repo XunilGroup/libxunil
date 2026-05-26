@@ -23,6 +23,11 @@ pub const CLOCK_GETTIME: usize = 228;
 pub const EXIT_GROUP: usize = 231;
 pub const KBD_READ: usize = 666;
 pub const SLEEP: usize = 909090; // zzz haha
+pub const IPC_CREATE: usize = 500;
+pub const IPC_READ: usize = 501;
+pub const IPC_WRITE: usize = 502;
+pub const IPC_MANAGE: usize = 503;
+pub const SHM_OPEN: usize = 600;
 pub const MAP_FRAMEBUFFER: usize = 5555;
 pub const FRAMEBUFFER_SWAP: usize = 6666;
 
