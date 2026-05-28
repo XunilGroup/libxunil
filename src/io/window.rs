@@ -1,4 +1,5 @@
 use alloc::{
+    format,
     string::{String, ToString},
     vec::Vec,
 };
@@ -25,11 +26,11 @@ pub struct Window {
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn request_window() -> Window {
+pub unsafe extern "C" fn request_window(width: usize, height: usize) -> Window {
     write_port_rust("window_manager".to_string(), "request_priv_ipc".to_string());
     let pid = getpid();
     let priv_ipc_name = loop {
-        if let Some((sender, msg)) = read_port_rust("window_manager".to_string(), -1) {
+        if let Some((sender, msg)) = read_port_rust(format!("wm_priv_{}", getpid()), -1) {
             println!("{}: {}", sender, msg);
 
             if msg.starts_with("ack_request_priv_ipc") {
@@ -52,7 +53,10 @@ pub unsafe extern "C" fn request_window() -> Window {
         PRIV_IPC_NAME = Some(priv_ipc_name.clone());
     }
 
-    write_port_rust(priv_ipc_name.clone(), "request_window_buf".to_string());
+    write_port_rust(
+        priv_ipc_name.clone(),
+        format!("request_window_buf {} {}", width, height),
+    );
 
     let (width, height, x, y, shm_name, shm_id) = loop {
         if let Some((_, msg)) = read_port_rust(priv_ipc_name.clone(), -1) {
@@ -103,6 +107,8 @@ pub unsafe extern "C" fn draw_buffer_to_window(
             unsafe { *ptr.add(wy * window_width + wx) = src_pixel };
         }
     }
+
+    set_dirty();
 
     0
 }

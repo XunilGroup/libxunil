@@ -9,7 +9,7 @@ typedef struct Window {
     uint64_t shm_id;
 } Window;
 
-Window request_window(void);
+Window request_window(size_t width, size_t height);
 
 int draw_buffer_to_window(
     const uint32_t* buffer,
