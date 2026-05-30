@@ -14,7 +14,7 @@ use core::{
 use crate::{
     heap::init_heap,
     mem::{malloc, memcpy},
-    syscall::{EXIT, GETPID, WRITE, syscall0, syscall3},
+    syscall::{EXIT, GETPID, KILL, WRITE, syscall0, syscall1, syscall3},
 };
 
 pub mod graphics;
@@ -689,6 +689,11 @@ pub unsafe extern "C" fn __isoc23_sscanf() -> ! {
 #[allow(unused_variables)]
 pub unsafe extern "C" fn sscanf(str: *mut u8, fmt: *const u8, args: ...) -> i32 {
     0
+}
+
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn kill(pid: isize) -> isize {
+    unsafe { syscall1(KILL, pid) }
 }
 
 #[unsafe(no_mangle)]

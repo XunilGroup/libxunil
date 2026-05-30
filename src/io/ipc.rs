@@ -1,12 +1,13 @@
-use core::ffi::c_char;
+use core::ffi::{CStr, c_char};
 
-use alloc::{ffi::CString, string::String};
+use alloc::{
+    ffi::CString,
+    string::{String, ToString},
+    vec,
+};
 use bitflags::bitflags;
 
-use crate::{
-    mem::malloc,
-    syscall::{IPC_CREATE, IPC_MANAGE, IPC_READ, IPC_WRITE, syscall2, syscall3},
-};
+use crate::syscall::{IPC_CREATE, IPC_MANAGE, IPC_READ, IPC_WRITE, syscall2, syscall3};
 
 bitflags! {
     #[derive(Debug)]
@@ -58,22 +59,18 @@ pub extern "C" fn read_port(name_ptr: *const u8, output_ptr: *mut u8, from: i64)
 }
 
 pub fn read_port_rust(name: String, from: i64) -> Option<(u64, String)> {
-    let name_cstring_opt = CString::new(name);
-    if let Ok(name_cstring) = name_cstring_opt {
-        let output_ptr = malloc(256);
-        return match read_port(name_cstring.as_ptr() as *const u8, output_ptr, from) {
-            -1 => None,
-            sender if sender > 0 => {
-                match unsafe { CString::from_raw(output_ptr as *mut c_char) }.into_string() {
-                    Ok(rust_string) => Some((sender as u64, rust_string)),
-                    _ => None,
-                }
-            }
-            _ => None,
-        };
-    } else {
+    let name_cstring = CString::new(name).ok()?;
+
+    let mut buf = vec![0u8; 256];
+    let sender = read_port(name_cstring.as_ptr() as *const u8, buf.as_mut_ptr(), from);
+
+    if sender <= 0 {
         return None;
     }
+
+    let cstr = unsafe { CStr::from_ptr(buf.as_ptr() as *const c_char) };
+    let msg = cstr.to_str().ok()?.to_string();
+    Some((sender as u64, msg))
 }
 
 #[unsafe(no_mangle)]

@@ -1,4 +1,7 @@
+use core::ffi::c_char;
+
 use alloc::{
+    ffi::CString,
     format,
     string::{String, ToString},
     vec::Vec,
@@ -10,7 +13,6 @@ use crate::{
         ipc::{read_port_rust, write_port_rust},
         time::sleep_ms,
     },
-    println,
     shm::{SHM_SLOT_SIZE, USER_SHM_BASE, shm_open_rust},
 };
 
@@ -26,17 +28,15 @@ pub struct Window {
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn request_window(width: usize, height: usize) -> Window {
+pub unsafe extern "C" fn request_window(width: usize, height: usize, title: *mut c_char) -> Window {
+    let title = unsafe { CString::from_raw(title) };
+
     write_port_rust("window_manager".to_string(), "request_priv_ipc".to_string());
     let pid = getpid();
     let priv_ipc_name = loop {
-        if let Some((sender, msg)) = read_port_rust(format!("wm_priv_{}", getpid()), -1) {
-            println!("{}: {}", sender, msg);
-
+        if let Some((_, msg)) = read_port_rust(format!("wm_priv_{}", getpid()), -1) {
             if msg.starts_with("ack_request_priv_ipc") {
                 let parts = msg.split_whitespace().collect::<Vec<&str>>();
-
-                println!("{}", parts[1].trim().parse::<isize>().unwrap_or(-1) == pid);
 
                 if parts[1].trim().parse::<isize>().unwrap_or(-1) == pid {
                     break parts[2].to_string();
@@ -47,15 +47,18 @@ pub unsafe extern "C" fn request_window(width: usize, height: usize) -> Window {
         unsafe { sleep_ms(1) };
     };
 
-    println!("Private IPC Name: {}", priv_ipc_name);
-
     unsafe {
         PRIV_IPC_NAME = Some(priv_ipc_name.clone());
     }
 
     write_port_rust(
         priv_ipc_name.clone(),
-        format!("request_window_buf {} {}", width, height),
+        format!(
+            "request_window_buf {} {} {}",
+            title.to_str().unwrap_or("noname"),
+            width,
+            height
+        ),
     );
 
     let (width, height, x, y, shm_name, shm_id) = loop {
@@ -84,6 +87,14 @@ pub unsafe extern "C" fn request_window(width: usize, height: usize) -> Window {
         x,
         y,
         shm_id,
+    }
+}
+
+pub unsafe fn request_window_rust(width: usize, height: usize, title: String) -> Window {
+    if let Ok(c_string) = CString::new(title) {
+        unsafe { request_window(width, height, c_string.as_ptr() as *mut c_char) }
+    } else {
+        panic!()
     }
 }
 

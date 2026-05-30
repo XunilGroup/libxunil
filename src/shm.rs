@@ -2,7 +2,7 @@ use alloc::{ffi::CString, string::String};
 
 use crate::syscall::{SHM_OPEN, syscall2};
 
-pub const USER_SHM_BASE: u64 = 0x0000_7000_0000_0000;
+pub const USER_SHM_BASE: u64 = 0x0000_4000_0000_0000;
 pub const SHM_SLOT_SIZE: u64 = 64 * 1024 * 1024;
 
 #[unsafe(no_mangle)]
