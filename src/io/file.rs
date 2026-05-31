@@ -15,7 +15,7 @@ impl FILE {
 }
 
 pub type Fd = i64;
-const MAX_FD: usize = 16;
+const MAX_FD: usize = 1024;
 
 fn fd_ok(fd: Fd) -> bool {
     fd >= 0 && (fd as usize) < MAX_FD
