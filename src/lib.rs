@@ -119,6 +119,11 @@ pub extern "C" fn abs(n: i32) -> i32 {
     n.abs()
 }
 
+#[unsafe(no_mangle)]
+pub extern "C" fn fabs(n: f32) -> f32 {
+    n.abs()
+}
+
 struct FormatBufWriter {
     buf: *mut u8,
     max: usize,
